@@ -1,6 +1,5 @@
 package pet.skyapi.weatherforecast.location;
 
-import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +8,9 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.annotation.Rollback;
 import pet.skyapi.weatherforecast.common.Location;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -34,4 +35,33 @@ class LocationRepositoryTest {
         Assertions.assertNotNull(savedLocation);
         Assertions.assertEquals(savedLocation.getCode(), "NYC_USA");
     }
+
+    @Test
+    void testListSuccess(){
+        List<Location> locationList = repository.findAllNotTrashed();
+
+        locationList.forEach(System.out::println);
+
+        assertThat(locationList.size()).isGreaterThan(0);
+    }
+
+    @Test
+    void testGetNotFound(){
+        String code = "ABCD";
+        Location location = repository.findByCode(code);
+
+        Assertions.assertNull(location);
+    }
+
+    @Test
+    void testGetSuccess(){
+        String code = "NYC_USA";
+        Location location = repository.findByCode(code);
+
+        System.out.println(location);
+
+        assertThat(location).isNotNull();
+        Assertions.assertEquals(location.getCode(), code);
+    }
+
 }

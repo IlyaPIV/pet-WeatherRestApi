@@ -32,6 +32,18 @@ class LocationApiControllerTest {
     @MockBean
     LocationService service;
 
+    private static Location generateNewLocation() {
+        Location location = new Location();
+        location.setCode("NYC_USA");
+        location.setCityName("New York City");
+        location.setRegionName("New York");
+        location.setCountryCode("US");
+        location.setCountryName("United States of America");
+        location.setEnabled(true);
+        location.setTrashed(false);
+        return location;
+    }
+
     @Test
     public void testAddShouldReturn400BadRequest() throws Exception {
         Location location = new Location();
@@ -60,20 +72,8 @@ class LocationApiControllerTest {
                 .andDo(print());
     }
 
-    private static Location generateNewLocation() {
-        Location location = new Location();
-        location.setCode("NYC_USA");
-        location.setCityName("New York City");
-        location.setRegionName("New York");
-        location.setCountryCode("US");
-        location.setCountryName("United States of America");
-        location.setEnabled(true);
-        location.setTrashed(false);
-        return location;
-    }
-
     @Test
-    public void testListShouldReturn204NoContent() throws Exception {
+    public void testGetListShouldReturn204NoContent() throws Exception {
 
         Mockito.when(service.getList()).thenReturn(Collections.emptyList());
 
@@ -83,7 +83,7 @@ class LocationApiControllerTest {
     }
 
     @Test
-    public void testListShouldReturn200OK() throws Exception{
+    public void testGetListShouldReturn200OK() throws Exception{
         Location location1 = generateNewLocation();
         Location location2 = generateNewLocation();
         location2.setCode("LACA_USA");
@@ -101,7 +101,7 @@ class LocationApiControllerTest {
     }
 
     @Test
-    public void testShouldReturn405MethodNotAllowed() throws Exception {
+    public void testPostShouldReturn405MethodNotAllowed() throws Exception {
         String requestURI = END_POINT_PATH + "/ABCDEF";
 
         mockMvc.perform(post(requestURI))
@@ -110,7 +110,7 @@ class LocationApiControllerTest {
     }
 
     @Test
-    public void testShouldReturn404MethodNotFound() throws Exception {
+    public void testGetShouldReturn404MethodNotFound() throws Exception {
         String requestURI = END_POINT_PATH + "/ABCDEF";
 
         mockMvc.perform(get(requestURI))
@@ -119,7 +119,7 @@ class LocationApiControllerTest {
     }
 
     @Test
-    public void testShouldReturn200Success() throws Exception {
+    public void testGetShouldReturn200Success() throws Exception {
 
         Location location = generateNewLocation();
         String requestURI = END_POINT_PATH + "/" + location.getCode();
@@ -132,4 +132,67 @@ class LocationApiControllerTest {
                 .andExpect(jsonPath("$.code", is(location.getCode())))
                 .andDo(print());
     }
+
+    @Test
+    public void testUpdateShouldReturn404NotFound() throws Exception{
+        Location location = generateNewLocation();
+        String bodyContent = mapper.writeValueAsString(location);
+
+        Mockito.when(service.updateLocation(location)).thenThrow(new LocationNotFoundException("exception in test"));
+
+        mockMvc.perform(put(END_POINT_PATH).contentType("application/json").content(bodyContent))
+                .andExpect(status().isNotFound())
+                .andDo(print());
+    }
+
+    @Test
+    public void testUpdateShouldReturn400BadRequest() throws Exception{
+        Location location = generateNewLocation();
+        location.setCode(null);
+        String bodyContent = mapper.writeValueAsString(location);
+
+        mockMvc.perform(put(END_POINT_PATH).contentType("application/json").content(bodyContent))
+                .andExpect(status().isBadRequest())
+                .andDo(print());
+    }
+
+    @Test
+    public void testUpdateShouldReturn200OK() throws Exception{
+        Location location = generateNewLocation();
+        String bodyContent = mapper.writeValueAsString(location);
+
+        Mockito.when(service.updateLocation(location)).thenReturn(location);
+
+        mockMvc.perform(put(END_POINT_PATH).contentType("application/json").content(bodyContent))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/json"))
+                .andExpect(jsonPath("$.code", is("NYC_USA")))
+                .andExpect(jsonPath("$.city_name", is("New York City")))
+                .andDo(print());
+    }
+
+    @Test
+    public void testDeleteShouldReturn404NotFound() throws Exception{
+        String code = "ABCDEF";
+        String requestURI = END_POINT_PATH + "/" + code;
+
+        Mockito.doThrow(LocationNotFoundException.class).when(service).deleteLocation(code);
+
+        mockMvc.perform(delete(requestURI))
+                .andExpect(status().isNotFound())
+                .andDo(print());
+    }
+
+    @Test
+    public void testDeleteShouldReturn204NotFound() throws Exception{
+        String code = "ABCDEF";
+        String requestURI = END_POINT_PATH + "/" + code;
+
+        Mockito.doNothing().when(service).deleteLocation(code);
+
+        mockMvc.perform(delete(requestURI))
+                .andExpect(status().isNoContent())
+                .andDo(print());
+    }
+
 }

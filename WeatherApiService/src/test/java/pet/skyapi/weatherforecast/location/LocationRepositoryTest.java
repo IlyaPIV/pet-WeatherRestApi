@@ -64,4 +64,15 @@ class LocationRepositoryTest {
         Assertions.assertEquals(location.getCode(), code);
     }
 
+    @Test
+    void testTrashSuccess(){
+        String code = "NYC_USA";
+
+        repository.trashByCode(code);
+
+        Location location = repository.findByCode(code);
+
+        Assertions.assertNull(location);
+    }
+
 }

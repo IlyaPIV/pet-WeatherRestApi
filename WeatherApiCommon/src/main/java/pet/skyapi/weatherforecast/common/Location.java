@@ -22,27 +22,26 @@ import java.util.Objects;
 public class Location {
     @Id
     @Column(length = 12, nullable = false, unique = true)
-    @NotBlank
+    @NotBlank(message = "Location code cannot be left blank")
     private String code;
 
     @Column(length = 128, nullable = false)
     @JsonProperty("city_name")
-    @NotBlank
+    @NotBlank(message = "City name cannot be left blank")
     private String cityName;
 
     @Column(length = 128)
     @JsonProperty("region_name")
-    @NotNull
     private String regionName;
 
     @Column(length = 64, nullable = false)
     @JsonProperty("country_name")
-    @NotBlank
+    @NotBlank(message = "Country name cannot be left blank")
     private String countryName;
 
     @Column(length = 2, nullable = false)
     @JsonProperty("country_code")
-    @NotBlank
+    @NotBlank(message = "Country code cannot be left blank")
     private String countryCode;
     @Column
     private boolean enabled;

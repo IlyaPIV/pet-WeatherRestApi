@@ -50,9 +50,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         error.setPath(((ServletWebRequest) request).getRequest().getServletPath());
 
         List<FieldError> fieldErrors = ex.getBindingResult().getFieldErrors();
-        fieldErrors.forEach(err ->{
-            error.addError(err.getDefaultMessage());
-        });
+        fieldErrors.forEach(err -> error.addError(err.getDefaultMessage()));
 
         LOGGER.error(ex.getMessage(), ex);
 

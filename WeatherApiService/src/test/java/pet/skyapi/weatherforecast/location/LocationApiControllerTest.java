@@ -237,7 +237,7 @@ class LocationApiControllerTest {
     }
 
     @Test
-    public void testDeleteShouldReturn204NotFound() throws Exception{
+    public void testDeleteShouldReturn204NoContent() throws Exception{
         String code = "ABCDEF";
         String requestURI = END_POINT_PATH + "/" + code;
 

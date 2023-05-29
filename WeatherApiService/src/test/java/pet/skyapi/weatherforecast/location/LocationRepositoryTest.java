@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.annotation.Rollback;
+import pet.skyapi.weatherforecast.common.HourlyWeather;
 import pet.skyapi.weatherforecast.common.Location;
 import pet.skyapi.weatherforecast.common.RealtimeWeather;
 
@@ -24,18 +25,18 @@ class LocationRepositoryTest {
     @Test
     public void testAddSuccess(){
         Location location = new Location();
-        location.setCode("NYC_USA");
-        location.setCityName("New York City");
-        location.setRegionName("New York");
-        location.setCountryCode("US");
-        location.setCountryName("United States of America");
+        location.setCode("WAW_PL");
+        location.setCityName("Warsaw");
+        //location.setRegionName("");
+        location.setCountryCode("PL");
+        location.setCountryName("Republic of Poland");
         location.setEnabled(true);
         location.setTrashed(false);
 
         Location savedLocation = repository.save(location);
 
         Assertions.assertNotNull(savedLocation);
-        Assertions.assertEquals(savedLocation.getCode(), "NYC_USA");
+        Assertions.assertEquals(savedLocation.getCode(), "WAW_PL");
     }
 
     @Test
@@ -101,6 +102,66 @@ class LocationRepositoryTest {
         Location updatedLocation = repository.save(location);
 
         assertThat(updatedLocation.getRealtimeWeather().getLocationCode()).isEqualTo(code);
+    }
+
+    @Test
+    public void testAddHourlyWeatherData(){
+        String locationCode = "NYC_USA";
+        Location location = repository.findById(locationCode).get();
+
+        List<HourlyWeather> hourlyWeather = location.getListHourlyWeather();
+
+        HourlyWeather forecast1 = new HourlyWeather()
+                                            .id(location, 10)
+                                            .temperature(15)
+                                            .precipitation(40)
+                                            .status("Rain");
+
+        HourlyWeather forecast2 = new HourlyWeather()
+                                            .location(location)
+                                            .hourOfDay(11)
+                                            .temperature(16)
+                                            .precipitation(30)
+                                            .status("Cloudy");
+
+        HourlyWeather forecast3 = new HourlyWeather()
+                .location(location)
+                .hourOfDay(12)
+                .temperature(19)
+                .precipitation(25)
+                .status("Sunny");
+
+        hourlyWeather.add(forecast1);
+        hourlyWeather.add(forecast2);
+        hourlyWeather.add(forecast3);
+
+        Location updatedLocation = repository.save(location);
+
+        assertThat(updatedLocation.getListHourlyWeather()).isNotEmpty();
+    }
+
+    @Test
+    public void testFindByCountryCodeAndCityNotFound(){
+        String countryCode = "BZ";
+        String cityName = "City";
+
+        Location location = repository.findByCountryCodeAndCityName(countryCode, cityName);
+
+        assertThat(location).isNull();
+    }
+
+    @Test
+    public void testFindByCountryCodeAndCityIsFound(){
+        String countryCode = "US";
+        String cityName = "New York City";
+
+        Location location = repository.findByCountryCodeAndCityName(countryCode, cityName);
+
+        assertThat(location).isNotNull();
+        assertThat(location.getCountryCode()).isEqualTo(countryCode);
+        assertThat(location.getCityName()).isEqualTo(cityName);
+
+        System.out.println(location);
     }
 
 }

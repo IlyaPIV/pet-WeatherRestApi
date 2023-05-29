@@ -9,6 +9,7 @@ import lombok.*;
 import org.hibernate.Hibernate;
 import org.hibernate.validator.constraints.Length;
 
+import java.util.List;
 import java.util.Objects;
 
 @Entity
@@ -46,15 +47,22 @@ public class Location {
     @NotNull(message = "Country code cannot be null")
     @Length(min = 2, max = 2, message = "Country code must have 2 characters")
     private String countryCode;
+
     @Column
     private boolean enabled;
+
     @Column
     @JsonIgnore
     private boolean trashed;
+
     @OneToOne(mappedBy = "location", cascade = CascadeType.ALL)
     @PrimaryKeyJoinColumn
     @JsonIgnore
     private RealtimeWeather realtimeWeather;
+
+    @OneToMany(mappedBy = "id.location", cascade = CascadeType.ALL)
+    private List<HourlyWeather> listHourlyWeather;
+
 
     public Location(String cityName, String regionName, String countryName, String countryCode) {
         this.cityName = cityName;

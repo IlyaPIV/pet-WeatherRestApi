@@ -1,6 +1,7 @@
 package pet.skyapi.weatherforecast.location;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pet.skyapi.weatherforecast.common.Location;
@@ -21,16 +22,22 @@ public class LocationService {
     }
 
     public Location getLocation(String code){
-        return repository.findByCode(code);
+        Location location = repository.findByCode(code);
+
+        if (location == null){
+            throw new LocationNotFoundException(code);
+        }
+
+        return location;
     }
 
-    public Location updateLocation(Location locationFromRequest) throws LocationNotFoundException {
+    public Location updateLocation(Location locationFromRequest){
         String code = locationFromRequest.getCode();
 
         Location locationInDB = repository.findByCode(code);
 
         if (locationInDB == null){
-            throw new LocationNotFoundException("No location found with the given code: " + code);
+            throw new LocationNotFoundException(code);
         }
 
         locationInDB.setCityName(locationFromRequest.getCityName());
@@ -43,11 +50,11 @@ public class LocationService {
     }
 
     @Transactional
-    public void deleteLocation(String code) throws LocationNotFoundException {
+    public void deleteLocation(String code){
         Location location = repository.findByCode(code);
 
         if (location == null){
-            throw new LocationNotFoundException("No location found with the given code: " + code);
+            throw new LocationNotFoundException(code);
         }
 
         repository.trashByCode(code);

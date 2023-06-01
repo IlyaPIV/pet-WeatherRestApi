@@ -53,8 +53,9 @@ class HourlyWeatherControllerTest {
     @Test
     public void testGetByIPShouldReturn400BadRequestBecauseGeolocationException() throws Exception {
 
+        GeolocationException ex = new GeolocationException("Geolocation error");
 
-        Mockito.when((geolocationService.getLocation(Mockito.anyString()))).thenThrow(GeolocationException.class);
+        Mockito.when((geolocationService.getLocation(Mockito.anyString()))).thenThrow(ex);
 
         mockMvc.perform(get(END_POINT_PATH).header(X_CURRENT_HOUR, "10"))
                 .andExpect(status().isBadRequest())

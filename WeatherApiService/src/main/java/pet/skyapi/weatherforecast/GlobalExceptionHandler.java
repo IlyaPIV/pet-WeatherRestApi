@@ -20,6 +20,8 @@ import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import pet.skyapi.weatherforecast.common.ErrorDTO;
+import pet.skyapi.weatherforecast.geolocation.GeolocationException;
+import pet.skyapi.weatherforecast.location.LocationNotFoundException;
 
 import java.util.Date;
 import java.util.List;
@@ -48,6 +50,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return errorDTO;
     }
 
+    @ExceptionHandler(GeolocationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    public ErrorDTO handleGeolocationException(HttpServletRequest request, Exception ex){
+        ErrorDTO errorDTO = getErrorDTO(request, ex, HttpStatus.BAD_REQUEST);
+        errorDTO.addError(ex.getMessage());
+        return errorDTO;
+    }
+
     @ExceptionHandler(ConstraintViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody
@@ -60,6 +71,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             errorDTO.addError(constraint.getPropertyPath() + ": " + constraint.getMessage());
         });
 
+        return errorDTO;
+    }
+
+    @ExceptionHandler(LocationNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ResponseBody
+    public ErrorDTO handleLocationNotFoundException(HttpServletRequest request, Exception ex){
+        ErrorDTO errorDTO = getErrorDTO(request, ex, HttpStatus.NOT_FOUND);
+        errorDTO.addError(ex.getMessage());
         return errorDTO;
     }
 

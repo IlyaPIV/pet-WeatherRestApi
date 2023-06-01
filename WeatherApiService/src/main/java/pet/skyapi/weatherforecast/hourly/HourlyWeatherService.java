@@ -18,33 +18,33 @@ public class HourlyWeatherService {
     private final HourlyWeatherRepository hourlyRepo;
     private final LocationRepository locationRepo;
 
-    public List<HourlyWeather> getHourlyWeatherByLocation(Location incomLocation, int currentHour) throws LocationNotFoundException {
+    public List<HourlyWeather> getHourlyWeatherByLocation(Location incomLocation, int currentHour) {
         String countryCode = incomLocation.getCountryCode();
         String cityName = incomLocation.getCityName();
 
         Location locationInDB = locationRepo.findByCountryCodeAndCityName(countryCode, cityName);
 
         if (locationInDB == null){
-            throw new LocationNotFoundException("No location found with the given country code and city name");
+            throw new LocationNotFoundException(countryCode, cityName);
         }
 
         return hourlyRepo.findByLocationCode(locationInDB.getCode(), currentHour);
     }
 
-    public List<HourlyWeather> getHourlyWeatherByLocationCode(String locationCode, int currentHour) throws LocationNotFoundException{
+    public List<HourlyWeather> getHourlyWeatherByLocationCode(String locationCode, int currentHour) {
         Location locationInDB = locationRepo.findByCode(locationCode);
 
         if (locationInDB == null) {
-            throw new LocationNotFoundException("No location found with the given location code: " + locationCode);
+            throw new LocationNotFoundException(locationCode);
         }
 
         return hourlyRepo.findByLocationCode(locationCode, currentHour);
     }
 
-    public List<HourlyWeather> updateByLocationCode(String locationCode, List<HourlyWeather> hourlyForecastFromRequest) throws LocationNotFoundException {
+    public List<HourlyWeather> updateByLocationCode(String locationCode, List<HourlyWeather> hourlyForecastFromRequest) {
         Location location = locationRepo.findByCode(locationCode);
         if (location == null){
-            throw new LocationNotFoundException("No location found with the given location code: " + locationCode);
+            throw new LocationNotFoundException(locationCode);
         }
 
         hourlyForecastFromRequest.forEach(forecast ->{

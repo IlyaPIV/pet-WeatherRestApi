@@ -1,6 +1,8 @@
 package pet.skyapi.weatherforecast;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +23,7 @@ import pet.skyapi.weatherforecast.common.ErrorDTO;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 @ControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
@@ -30,10 +33,40 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ResponseBody
     public ErrorDTO handleGenericException(HttpServletRequest request, Exception ex){
+        ErrorDTO errorDTO = getErrorDTO(request, ex, HttpStatus.INTERNAL_SERVER_ERROR);
+        errorDTO.addError(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
+
+        return errorDTO;
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    public ErrorDTO handleBadRequestException(HttpServletRequest request, Exception ex){
+        ErrorDTO errorDTO = getErrorDTO(request, ex, HttpStatus.BAD_REQUEST);
+        errorDTO.addError(ex.getMessage());
+        return errorDTO;
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    public ErrorDTO handleConstraintViolationException(HttpServletRequest request, Exception ex){
+        ErrorDTO errorDTO = getErrorDTO(request, ex, HttpStatus.BAD_REQUEST);
+
+        ConstraintViolationException violationException = (ConstraintViolationException) ex;
+        var constraintViolations = violationException.getConstraintViolations();
+        constraintViolations.forEach(constraint -> {
+            errorDTO.addError(constraint.getPropertyPath() + ": " + constraint.getMessage());
+        });
+
+        return errorDTO;
+    }
+
+    private ErrorDTO getErrorDTO(HttpServletRequest request, Exception ex, HttpStatus status) {
         ErrorDTO error = new ErrorDTO();
         error.setTimestamp(new Date());
-        error.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-        error.addError(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
+        error.setStatus(status.value());
         error.setPath(request.getServletPath());
 
         LOGGER.error(ex.getMessage(), ex);
@@ -56,4 +89,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         return new ResponseEntity<>(error, headers, status);
     }
+
+
 }

@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 @Getter
 @Setter
@@ -22,4 +23,17 @@ public class HourlyWeatherId implements Serializable {
     @JoinColumn(name = "location_code")
     private Location location;
 
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        HourlyWeatherId that = (HourlyWeatherId) o;
+        return hourOfDay == that.hourOfDay && Objects.equals(location, that.location);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(hourOfDay, location);
+    }
 }

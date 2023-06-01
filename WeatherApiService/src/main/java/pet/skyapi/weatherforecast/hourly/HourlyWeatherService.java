@@ -7,14 +7,16 @@ import pet.skyapi.weatherforecast.common.Location;
 import pet.skyapi.weatherforecast.location.LocationNotFoundException;
 import pet.skyapi.weatherforecast.location.LocationRepository;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class HourlyWeatherService {
 
-    private HourlyWeatherRepository hourlyRepo;
-    private LocationRepository locationRepo;
+    private final HourlyWeatherRepository hourlyRepo;
+    private final LocationRepository locationRepo;
 
     public List<HourlyWeather> getHourlyWeatherByLocation(Location incomLocation, int currentHour) throws LocationNotFoundException {
         String countryCode = incomLocation.getCountryCode();
@@ -27,5 +29,41 @@ public class HourlyWeatherService {
         }
 
         return hourlyRepo.findByLocationCode(locationInDB.getCode(), currentHour);
+    }
+
+    public List<HourlyWeather> getHourlyWeatherByLocationCode(String locationCode, int currentHour) throws LocationNotFoundException{
+        Location locationInDB = locationRepo.findByCode(locationCode);
+
+        if (locationInDB == null) {
+            throw new LocationNotFoundException("No location found with the given location code: " + locationCode);
+        }
+
+        return hourlyRepo.findByLocationCode(locationCode, currentHour);
+    }
+
+    public List<HourlyWeather> updateByLocationCode(String locationCode, List<HourlyWeather> hourlyForecastFromRequest) throws LocationNotFoundException {
+        Location location = locationRepo.findByCode(locationCode);
+        if (location == null){
+            throw new LocationNotFoundException("No location found with the given location code: " + locationCode);
+        }
+
+        hourlyForecastFromRequest.forEach(forecast ->{
+            forecast.getId().setLocation(location);
+        });
+
+        List<HourlyWeather> hourlyWeatherInDB = location.getListHourlyWeather();
+        List<HourlyWeather> hourlyWeatherToBeRemoved = new ArrayList<>();
+        for (HourlyWeather item:
+                hourlyWeatherInDB) {
+            if (!hourlyForecastFromRequest.contains(item)){
+                hourlyWeatherToBeRemoved.add(item.getShallowCopy());
+            }
+        }
+        for (HourlyWeather item : hourlyWeatherToBeRemoved){
+            hourlyWeatherInDB.remove(item);
+        }
+
+
+        return (List<HourlyWeather>) hourlyRepo.saveAll(hourlyForecastFromRequest);
     }
 }

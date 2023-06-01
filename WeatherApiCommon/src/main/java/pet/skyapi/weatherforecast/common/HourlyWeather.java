@@ -10,6 +10,8 @@ import lombok.Setter;
 import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.constraints.Range;
 
+import java.util.Objects;
+
 @Entity
 @Getter
 @Setter
@@ -60,5 +62,35 @@ public class HourlyWeather {
     public HourlyWeather hourOfDay(int hour){
         this.id.setHourOfDay(hour);
         return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        HourlyWeather that = (HourlyWeather) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "HourlyWeather{" +
+                "hourOfDay=" + id.getHourOfDay() +
+                ", temperature=" + temperature +
+                ", precipitation=" + precipitation +
+                ", status='" + status + '\'' +
+                '}';
+    }
+
+    public HourlyWeather getShallowCopy(){
+        HourlyWeather copy = new HourlyWeather();
+        copy.setId(this.getId());
+
+        return copy;
     }
 }

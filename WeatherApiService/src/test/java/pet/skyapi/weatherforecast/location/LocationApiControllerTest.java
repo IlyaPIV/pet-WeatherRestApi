@@ -1,6 +1,5 @@
 package pet.skyapi.weatherforecast.location;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -18,7 +17,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -35,21 +33,32 @@ class LocationApiControllerTest {
     @MockBean
     LocationService service;
 
-    private static Location generateNewLocation() {
-        Location location = new Location();
+    private static LocationDTO generateNewLocationDTO() {
+        LocationDTO location = new LocationDTO();
         location.setCode("NYC_USA");
         location.setCityName("New York City");
         location.setRegionName("New York");
         location.setCountryCode("US");
         location.setCountryName("United States of America");
         location.setEnabled(true);
+        return location;
+    }
+
+    private static Location generateByDto(LocationDTO locationDTO){
+        Location location = new Location();
+        location.setCode(locationDTO.getCode());
         location.setTrashed(false);
+        location.setCityName(locationDTO.getCityName());
+        location.setRegionName(locationDTO.getRegionName());
+        location.setCountryName(locationDTO.getCountryName());
+        location.setCountryCode(locationDTO.getCountryCode());
+
         return location;
     }
 
     @Test
     public void testValidateRequestBodyLocationCodeNotNull() throws Exception {
-        Location location = generateNewLocation();
+        LocationDTO location = generateNewLocationDTO();
         location.setCode(null);
 
         String bodyContent = mapper.writeValueAsString(location);
@@ -63,7 +72,7 @@ class LocationApiControllerTest {
 
     @Test
     public void testValidateRequestBodyLocationCodeLength() throws Exception {
-        Location location = generateNewLocation();
+        LocationDTO location = generateNewLocationDTO();
         location.setCode("BY");
 
         String bodyContent = mapper.writeValueAsString(location);
@@ -77,7 +86,7 @@ class LocationApiControllerTest {
 
     @Test
     public void testValidateRequestBodyAllFieldInvalid() throws Exception {
-        Location location = new Location();
+        LocationDTO location = new LocationDTO();
         location.setRegionName("");
 
         String bodyContent = mapper.writeValueAsString(location);
@@ -99,7 +108,7 @@ class LocationApiControllerTest {
 
     @Test
     public void testAddShouldReturn400BadRequest() throws Exception {
-        Location location = new Location();
+        LocationDTO location = new LocationDTO();
 
         String bodyContent = mapper.writeValueAsString(location);
 
@@ -110,11 +119,12 @@ class LocationApiControllerTest {
 
     @Test
     public void testAddShouldReturn201Created() throws Exception {
-        Location location = generateNewLocation();
+        LocationDTO locationDTO = generateNewLocationDTO();
+        Location location = generateByDto(locationDTO);
 
         Mockito.when(service.add(location)).thenReturn(location);
 
-        String bodyContent = mapper.writeValueAsString(location);
+        String bodyContent = mapper.writeValueAsString(locationDTO);
 
         mockMvc.perform(post(END_POINT_PATH).contentType("application/json").content(bodyContent))
                 .andExpect(status().isCreated())
@@ -137,15 +147,19 @@ class LocationApiControllerTest {
 
     @Test
     public void testGetListShouldReturn200OK() throws Exception{
-        Location location1 = generateNewLocation();
-        Location location2 = generateNewLocation();
-        location2.setCode("LACA_USA");
-        location2.setRegionName("California");
-        location2.setCityName("Los Angeles");
+        LocationDTO locationDto1 = generateNewLocationDTO();
+        LocationDTO locationDto2 = generateNewLocationDTO();
+        locationDto2.setCode("LACA_USA");
+        locationDto2.setRegionName("California");
+        locationDto2.setCityName("Los Angeles");
 
-        List<Location> locationList = Arrays.asList(location1, location2);
+        List<LocationDTO> locationList = Arrays.asList(locationDto1, locationDto2);
 
-        Mockito.when(service.getList()).thenReturn(locationList);
+        Location location1 = generateByDto(locationDto1);
+        Location location2 = generateByDto(locationDto2);
+
+        List<Location> locations = Arrays.asList(location1, location2);
+        Mockito.when(service.getList()).thenReturn(locations);
 
         mockMvc.perform(get(END_POINT_PATH))
                 .andExpect(status().isOk())
@@ -164,7 +178,12 @@ class LocationApiControllerTest {
 
     @Test
     public void testGetShouldReturn404MethodNotFound() throws Exception {
-        String requestURI = END_POINT_PATH + "/ABCDEF";
+        String locationCode = "ABCDEF";
+        String requestURI = END_POINT_PATH + "/" + locationCode;
+
+        LocationNotFoundException ex = new LocationNotFoundException(locationCode);
+
+        Mockito.when(service.getLocation(Mockito.anyString())).thenThrow(ex);
 
         mockMvc.perform(get(requestURI))
                 .andExpect(status().isNotFound())
@@ -174,8 +193,11 @@ class LocationApiControllerTest {
     @Test
     public void testGetShouldReturn200Success() throws Exception {
 
-        Location location = generateNewLocation();
-        String requestURI = END_POINT_PATH + "/" + location.getCode();
+        LocationDTO dto = generateNewLocationDTO();
+        Location location = generateByDto(dto);
+
+        String requestURI = END_POINT_PATH + "/" + dto.getCode();
+
 
         Mockito.when(service.getLocation(location.getCode())).thenReturn(location);
 
@@ -188,10 +210,11 @@ class LocationApiControllerTest {
 
     @Test
     public void testUpdateShouldReturn404NotFound() throws Exception{
-        Location location = generateNewLocation();
-        String bodyContent = mapper.writeValueAsString(location);
+        LocationDTO locationDTO = generateNewLocationDTO();
+        Location location = generateByDto(locationDTO);
+        String bodyContent = mapper.writeValueAsString(locationDTO);
 
-        Mockito.when(service.updateLocation(location)).thenThrow(new LocationNotFoundException("exception in test"));
+        Mockito.when(service.updateLocation(location)).thenThrow(new LocationNotFoundException(location.getCode()));
 
         mockMvc.perform(put(END_POINT_PATH).contentType("application/json").content(bodyContent))
                 .andExpect(status().isNotFound())
@@ -200,7 +223,7 @@ class LocationApiControllerTest {
 
     @Test
     public void testUpdateShouldReturn400BadRequest() throws Exception{
-        Location location = generateNewLocation();
+        LocationDTO location = generateNewLocationDTO();
         location.setCode(null);
         String bodyContent = mapper.writeValueAsString(location);
 
@@ -211,9 +234,10 @@ class LocationApiControllerTest {
 
     @Test
     public void testUpdateShouldReturn200OK() throws Exception{
-        Location location = generateNewLocation();
-        String bodyContent = mapper.writeValueAsString(location);
+        LocationDTO locationDTO = generateNewLocationDTO();
+        String bodyContent = mapper.writeValueAsString(locationDTO);
 
+        Location location = generateByDto(locationDTO);
         Mockito.when(service.updateLocation(location)).thenReturn(location);
 
         mockMvc.perform(put(END_POINT_PATH).contentType("application/json").content(bodyContent))
@@ -237,7 +261,7 @@ class LocationApiControllerTest {
     }
 
     @Test
-    public void testDeleteShouldReturn204NotFound() throws Exception{
+    public void testDeleteShouldReturn204NoContent() throws Exception{
         String code = "ABCDEF";
         String requestURI = END_POINT_PATH + "/" + code;
 

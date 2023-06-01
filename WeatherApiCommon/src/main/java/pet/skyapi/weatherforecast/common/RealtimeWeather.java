@@ -11,6 +11,7 @@ import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.constraints.Range;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 
 @Entity
@@ -51,6 +52,7 @@ public class RealtimeWeather {
     @MapsId
     @JsonIgnore
     private Location location;
+
 
     public void setLocation(Location location) {
         this.locationCode = location.getCode();

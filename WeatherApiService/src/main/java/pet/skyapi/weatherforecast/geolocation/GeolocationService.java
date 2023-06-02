@@ -8,16 +8,20 @@ import org.springframework.stereotype.Service;
 import pet.skyapi.weatherforecast.common.Location;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 @Service
 public class GeolocationService {
     private static final Logger LOGGER = LoggerFactory.getLogger(GeolocationService.class);
-    private final String DB_PATH = "ip2locdb/IP2LOCATION-LITE-DB3.BIN";
+    private final String DB_PATH = "/ip2locdb/IP2LOCATION-LITE-DB3.BIN";
     private IP2Location ipLocator = new IP2Location();
 
     public GeolocationService() {
         try {
-            ipLocator.Open(DB_PATH);
+            InputStream inputStream = getClass().getResourceAsStream(DB_PATH);
+            byte[] data = inputStream.readAllBytes();
+            ipLocator.Open(data);
+            inputStream.close();
         } catch (IOException ex) {
             LOGGER.error(ex.getMessage(), ex);
         }

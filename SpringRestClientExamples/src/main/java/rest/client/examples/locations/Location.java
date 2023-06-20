@@ -64,6 +64,14 @@ public class Location {
         this.trashed = trashed;
     }
 
+    public void setRegionName(String regionName) {
+        this.regionName = regionName;
+    }
+
+    public String getRegionName() {
+        return regionName;
+    }
+
     @Override
     public String toString() {
         return "{" +

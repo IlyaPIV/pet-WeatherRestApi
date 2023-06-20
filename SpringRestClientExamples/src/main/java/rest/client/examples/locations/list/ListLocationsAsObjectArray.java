@@ -1,10 +1,9 @@
 package rest.client.examples.locations.list;
 
-import org.springframework.http.HttpStatusCode;
+
 import org.springframework.web.client.*;
 import rest.client.examples.locations.Location;
 
-import java.util.Arrays;
 
 public class ListLocationsAsObjectArray {
     public static void main(String[] args) {
